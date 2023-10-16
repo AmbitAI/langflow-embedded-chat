@@ -82,35 +82,45 @@ export default function ChatWindow({
       );
   }, [triggerRef, width, height, position]);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
 
   function handleClick() {
     if (value && value.trim() !== "") {
       addMessage({ message: value, isSend: true });
       setSendingMessage(true);
       setValue("");
-      sendMessage(hostUrl, flowId, value, chat_inputs, chat_input_field, tweaks,api_key)
+      sendMessage(
+        hostUrl,
+        flowId,
+        value,
+        chat_inputs,
+        chat_input_field,
+        tweaks,
+        api_key,
+        sessionId ? sessionId : undefined
+      )
         .then((res) => {
           if (
             res.data &&
             res.data.result &&
             Object.keys(res.data.result).length > 0
           ) {
-            if (chat_output_key &&
-            res.data.result[chat_output_key]) {
+            if (chat_output_key && res.data.result[chat_output_key]) {
               updateLastMessage({
                 message: res.data.result[chat_output_key],
                 isSend: false,
               });
-            } else if (
-              Object.keys(res.data.result).length === 1
-            ) {
+            } else if (Object.keys(res.data.result).length === 1) {
               updateLastMessage({
                 message: Object.values(res.data.result)[0],
                 isSend: false,
               });
+
+              setSessionId(res.data.session_id);
             } else {
               updateLastMessage({
-                message: "Multiple output keys were detected in the response. Please, define the output key to specify the intended response.",
+                message:
+                  "Multiple output keys were detected in the response. Please, define the output key to specify the intended response.",
                 isSend: false,
                 error: true,
               });
@@ -203,7 +213,11 @@ export default function ChatWindow({
             }}
             type="text"
             disabled={sendingMessage}
-            placeholder={sendingMessage ? (placeholder_sending || "Thinking...") : (placeholder || "Type your message...")}
+            placeholder={
+              sendingMessage
+                ? placeholder_sending || "Thinking..."
+                : placeholder || "Type your message..."
+            }
             style={input_style}
             className="cl-input-element"
           />
